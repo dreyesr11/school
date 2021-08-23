@@ -5,7 +5,7 @@ const USER_DB = 'sample_geospatial'
 const USER_COLL = 'shipwrecks'
 
 describe('Check Database', () => {
-    it('Get especific user', async () => {
+    it('Get especific shipwreck', async () => {
         const client = await getClient()
 
         const collection = client.db(USER_DB).collection(USER_COLL)

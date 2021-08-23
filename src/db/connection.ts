@@ -16,4 +16,38 @@ async function getClient() {
     return client
 }
 
-export { getClient }
+async function insertDocument(
+    mclient: MongoClient,
+    { DB, COLLECTION }: { [index: string]: string },
+    data: any
+) {
+    const collection = mclient.db(DB).collection(COLLECTION)
+    const result = await collection.insertOne(data)
+    return result
+}
+
+async function deleteDocument(
+    mclient: MongoClient,
+    { DB, COLLECTION }: { [index: string]: string },
+    query: { [index: string]: string }
+) {
+    const collection = mclient.db(DB).collection(COLLECTION)
+    const result = await collection.deleteOne(query)
+    return result
+}
+
+async function getDocuments(
+    mclient: MongoClient,
+    { DB, COLLECTION }: { [index: string]: string },
+    query: { [index: string]: string } = {},
+    onlyOne = false
+) {
+    const collection = mclient.db(DB).collection(COLLECTION)
+    const result = onlyOne
+        ? await collection.findOne(query)
+        : await collection.find(query).toArray()
+
+    return result
+}
+
+export { getClient, getDocuments, insertDocument, deleteDocument }

@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:14-alpine
 
 RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
@@ -12,6 +12,6 @@ COPY --chown=node:node . .
 
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 9000
 
 CMD [ "node", "dist/main.js" ]
