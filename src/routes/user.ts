@@ -7,7 +7,8 @@ import {
     signUp,
     isThereAUser,
     getUser,
-    deleteUser
+    deleteUser,
+    updateUser
 } from '../controllers/userController'
 import usernameParam from './userParams'
 
@@ -20,6 +21,6 @@ userRoutes.get('/validations', isThereAUser)
 
 userRoutes.use(AuthMiddleware)
 userRoutes.get('/users', getUsers)
-userRoutes.route('/users/:username').get(getUser).delete(deleteUser)
+userRoutes.route('/users/:username').get(getUser).patch(updateUser).delete(deleteUser)
 
 export default userRoutes

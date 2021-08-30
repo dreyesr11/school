@@ -1,18 +1,13 @@
-class Role {
-    private _id?: number
+import BaseModel from './BaseModel'
+
+class Role extends BaseModel {
     private name: string
     private description: string
 
-    constructor(name: string, description: string, id = 0) {
-        this._id = id
+    constructor(name: string, description: string) {
+        super()
         this.name = name
         this.description = description
-    }
-
-    getJson() {
-        const role = Object.assign({}, this)
-        delete role?._id
-        return role
     }
 }
 

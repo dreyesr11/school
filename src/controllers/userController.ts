@@ -1,8 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
 
 import { DB } from '../config'
-import { User, USER_COLLECTION as COLLECTION } from '../models/User'
-import { insertDocument, getDocuments, deleteDocument } from '../db/connection'
+import { User, USER_AGGREGATION, USER_COLLECTION as COLLECTION } from '../models/User'
+import {
+    insertDocument,
+    getDocuments,
+    deleteDocument,
+    getDocumentsWithAgreggations,
+    updateDocument
+} from '../db/connection'
 import CustomError from '../models/CustomError'
 
 import generateToken from '../helpers/auth'
@@ -16,7 +22,6 @@ import {
     typeNotFound
 } from '../helpers/errorDescriptions'
 import { ObjectId } from 'mongodb'
-import { ROLE_COLLECTION } from '../models/Role'
 
 const signUp = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -25,11 +30,14 @@ const signUp = async (req: Request, res: Response, next: NextFunction) => {
             throw new CustomError(+missingFields[0], missingFields[1].toString())
 
         const encryptedPassword = await encryptString(password)
-        const newUser = new User(full_name, username, encryptedPassword, email, age, {
-            $ref: ROLE_COLLECTION,
-            $id: new ObjectId(role_id),
-            $db: DB
-        })
+        const newUser = new User(
+            full_name,
+            username,
+            encryptedPassword,
+            email,
+            age,
+            new ObjectId(role_id)
+        )
         const insertedUser = await insertDocument(
             req.app.locals.dbclient,
             { DB, COLLECTION },
@@ -57,9 +65,10 @@ const signIn = async (req: Request, res: Response, next: NextFunction) => {
         if (!username || !password)
             throw new CustomError(+missingFields[0], missingFields[1].toString())
 
-        const userData = await getDocuments(
+        const userData = await getDocumentsWithAgreggations(
             req.app.locals.dbclient,
             { DB, COLLECTION },
+            USER_AGGREGATION,
             { username },
             true
         )
@@ -73,15 +82,6 @@ const signIn = async (req: Request, res: Response, next: NextFunction) => {
         const token = generateToken(userData.user)
         userData.token = token
         res.status(200).json(userData)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const getUsers = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const users = await getDocuments(req.app.locals.dbclient, { DB, COLLECTION })
-        return res.json(users)
     } catch (error) {
         next(error)
     }
@@ -114,23 +114,31 @@ const isThereAUser = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-const getUser = async (req: any, res: Response, next: NextFunction) => {
+const updateUser = async (req: any, res: Response, next: NextFunction) => {
     try {
         const { username } = req
         if (!username) throw new CustomError(+missingFields[0], missingFields[1].toString())
 
-        const userData = await getDocuments(
+        const { password } = req.body
+        if (password) req.body.password = await encryptString(password)
+
+        const filter = { username }
+        const options = { upsert: false }
+        const updatedData = req.body
+        const updatedResult = await updateDocument(
             req.app.locals.dbclient,
             { DB, COLLECTION },
-            { username },
-            true
+            { filter, options, updatedData }
         )
-        if (!userData) {
-            const [errorCode, errorMessage] = typeNotFound('User')
+
+        if (!updatedResult.modifiedCount){
+            const [errorCode, errorMessage] = genericAction(`user: ${username}`, 'updated')
             throw new CustomError(+errorCode, errorMessage.toString())
         }
 
-        return res.status(200).json(userData)
+        return res.status(200).json({
+            message: 'The user has been updated'
+        })
     } catch (error) {
         next(error)
     }
@@ -160,4 +168,42 @@ const deleteUser = async (req: any, res: Response, next: NextFunction) => {
     }
 }
 
-export { getUsers, signUp, signIn, isThereAUser, getUser, deleteUser }
+const getUsers = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const users = await getDocumentsWithAgreggations(
+            req.app.locals.dbclient,
+            {
+                DB,
+                COLLECTION
+            },
+            USER_AGGREGATION
+        )
+        return res.json(users)
+    } catch (error) {
+        next(error)
+    }
+}
+
+const getUser = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const { username } = req
+        if (!username) throw new CustomError(+missingFields[0], missingFields[1].toString())
+
+        const userData = await getDocuments(
+            req.app.locals.dbclient,
+            { DB, COLLECTION },
+            { username },
+            true
+        )
+        if (!userData) {
+            const [errorCode, errorMessage] = typeNotFound('User')
+            throw new CustomError(+errorCode, errorMessage.toString())
+        }
+
+        return res.status(200).json(userData)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export { signUp, signIn, isThereAUser, updateUser, deleteUser, getUsers, getUser }
