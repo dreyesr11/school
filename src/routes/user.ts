@@ -19,8 +19,11 @@ userRoutes.post('/signup', signUp)
 userRoutes.post('/signin', signIn)
 userRoutes.get('/validations', isThereAUser)
 
-userRoutes.use(AuthMiddleware)
-userRoutes.get('/users', getUsers)
-userRoutes.route('/users/:username').get(getUser).patch(updateUser).delete(deleteUser)
+userRoutes.get('/users', [AuthMiddleware], getUsers)
+userRoutes
+    .route('/users/:username')
+    .get([AuthMiddleware], getUser)
+    .patch([AuthMiddleware], updateUser)
+    .delete([AuthMiddleware], deleteUser)
 
 export default userRoutes
