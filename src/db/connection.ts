@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { MongoClient, ObjectId } from 'mongodb'
 
 import { MONGO_USER, MONGO_PASS, MONGO_PROJECT_CLUSTER } from '../config'
 import Aggregation from '../types/Aggregation'
@@ -45,7 +45,7 @@ async function updateDocument(
 async function deleteDocument(
     mclient: MongoClient,
     { DB, COLLECTION }: { [index: string]: string },
-    query: { [index: string]: string }
+    query: { [index: string]: string | ObjectId }
 ) {
     const collection = mclient.db(DB).collection(COLLECTION)
     const result = await collection.deleteOne(query)
@@ -55,7 +55,7 @@ async function deleteDocument(
 async function getDocuments(
     mclient: MongoClient,
     { DB, COLLECTION }: { [index: string]: string },
-    query: { [index: string]: string } = {},
+    query: { [index: string]: string | ObjectId | number } = {},
     onlyOne = false
 ) {
     const collection = mclient.db(DB).collection(COLLECTION)
@@ -70,7 +70,7 @@ async function getDocumentsWithAgreggations(
     mclient: MongoClient,
     { DB, COLLECTION }: { [index: string]: string },
     aggregation: Aggregation,
-    query: { [index: string]: string } = {},
+    query: { [index: string]: string | ObjectId | number } = {},
     onlyOne = false
 ) {
     const collection = mclient.db(DB).collection(COLLECTION)

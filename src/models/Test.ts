@@ -38,7 +38,6 @@ const TEST_AGGREGATION = {
     as: 'course'
 }
 
-
 const TEST_COLLECTION = 'Tests'
 
-export { Test, TEST_COLLECTION }
+export { Test, TEST_COLLECTION, TEST_AGGREGATION }
